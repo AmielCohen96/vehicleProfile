@@ -1,12 +1,12 @@
 import pandas as pd
 from datetime import datetime
 import math
+from TravelProfiles import TravelProfiles
 
 
 def lat_lon_to_grid(lat, lon, grid_size_km=2):
     earth_circumference_km = 40075.0
     km_per_degree = earth_circumference_km / 360.0
-
     try:
         lon = float(lon)
         lat = float(lat)
@@ -81,7 +81,7 @@ def process_coordinates(lat, lon):
 
 def process_drive_duration(value):
     try:
-        duration = duration = float(value)
+        duration = float(value)
     except ValueError:
         print(f"Invalid drive duration value: '{value}', setting to default.")
         return "Invalid drive duration"
@@ -171,22 +171,30 @@ def process_mileage(value):
 csv_file_path = 'C:\\Users\\User\\PycharmProjects\\driverProfile\\data\\Trips.csv'
 df = pd.read_csv(csv_file_path, low_memory=False)
 
+# Initialize TravelProfiles
+travel_profiles = TravelProfiles()
+
 
 # Process a single row
 def process_row(row):
     result = ""
-    result += process_time_type(row['start_drive']) + " "
-    result += process_coordinates(row['start_latitude'], row['start_longitude']) + " "
-    result += process_time_type(row['end_drive']) + " "
-    result += process_coordinates(row['end_latitude'], row['end_longitude']) + " "
-    result += process_drive_duration(row['drive_duration']) + " "
-    result += process_idle_duration(row['idle_duration']) + " "
+    result += process_time_type(row['start_drive'])
+    result += process_coordinates(row['start_latitude'], row['start_longitude'])
+    result += process_time_type(row['end_drive'])
+    result += process_coordinates(row['end_latitude'], row['end_longitude'])
+    result += process_drive_duration(row['drive_duration'])
+    result += process_idle_duration(row['idle_duration'])
     result += process_mileage(row['mileage'])
     return result
 
 
 # Iterate over the first 10 rows and process them
-for index, row in df.head(10).iterrows():
+for index, row in df.head(50).iterrows():
     print(index)
     row_description = process_row(row)
     print(row_description)
+    # Get the vehicle number from the row and add the trip to the corresponding Trie
+    vehicle_id = row['vehicle_id']
+    travel_profiles.add_trip(vehicle_id, row_description)
+print("Trie for vehicle 235268:")
+travel_profiles.display_profile("235268")
