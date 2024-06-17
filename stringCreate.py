@@ -174,6 +174,9 @@ df = pd.read_csv(csv_file_path, low_memory=False)
 # Initialize TravelProfiles
 travel_profiles = TravelProfiles()
 
+# Print unique vehicle numbers to verify 235268 is present
+print("Unique vehicle numbers in the CSV file:")
+print(df['vehicle_id'].unique())
 
 # Process a single row
 def process_row(row):
@@ -187,14 +190,14 @@ def process_row(row):
     result += process_mileage(row['mileage'])
     return result
 
-
-# Iterate over the first 10 rows and process them
-for index, row in df.head(50).iterrows():
-    print(index)
+# Iterate over the first 50 rows and process them
+for index, row in df.head(2000).iterrows():
+    print(f"Processing row {index} with vehicle_id {row['vehicle_id']}")
     row_description = process_row(row)
-    print(row_description)
+    print(f"Processed trip description: {row_description}")
     # Get the vehicle number from the row and add the trip to the corresponding Trie
     vehicle_id = row['vehicle_id']
+    print("vehicle id: " + f"{vehicle_id}")
     travel_profiles.add_trip(vehicle_id, row_description)
 print("Trie for vehicle 235268:")
 travel_profiles.display_profile("235268")
