@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
-import math
 from VehicleProfiles import VehicleProfiles
+
 
 def lat_lon_to_grid(lat, lon, grid_size_km=2):
     earth_circumference_km = 40075.0
@@ -18,6 +18,7 @@ def lat_lon_to_grid(lat, lon, grid_size_km=2):
 
     return x_index, y_index
 
+
 def grid_to_letters(x_index, y_index):
     def index_to_letters(index):
         letters = ""
@@ -30,8 +31,9 @@ def grid_to_letters(x_index, y_index):
     y_letters = index_to_letters(y_index)
     return f"{x_letters}{y_letters}"
 
+
 def categorize_time(time_str):
-    time_format = "%Y-%m-%d %H:%M:%S"
+    time_format = "%d/%m/%Y %H:%M"  # Adjusted to match your CSV format
     try:
         time_obj = datetime.strptime(time_str, time_format)
     except ValueError:
@@ -62,16 +64,19 @@ def categorize_time(time_str):
     elif 0 <= total_minutes < 270:
         return "j"
     else:
-        return "n"
+        return "Invalid time"
+
 
 def process_time_type(value):
     return categorize_time(value)
+
 
 def process_coordinates(lat, lon):
     x_index, y_index = lat_lon_to_grid(lat, lon)
     if x_index is None or y_index is None:
         return "n"
     return grid_to_letters(x_index, y_index)
+
 
 def process_drive_duration(value):
     try:
@@ -98,6 +103,7 @@ def process_drive_duration(value):
         return "h"
     return "n"  # Handle any unexpected value
 
+
 def process_idle_duration(value):
     try:
         duration = float(value)  # Convert to float to handle potential decimal values
@@ -123,6 +129,7 @@ def process_idle_duration(value):
         return "h"
 
     return "n"  # Handle any unexpected value
+
 
 def process_mileage(value):
     try:
@@ -157,12 +164,18 @@ def process_mileage(value):
 
     return "n"  # Handle any unexpected value
 
+
 # Load the CSV file into a DataFrame
 csv_file_path = 'C:\\Users\\User\\PycharmProjects\\driverProfile\\data\\Trips.csv'
 df = pd.read_csv(csv_file_path, low_memory=False)
 
 # Initialize VehicleProfiles
-travel_profiles = VehicleProfiles()
+vehicle_profiles = VehicleProfiles()
+
+# Print unique vehicle numbers to verify 235268 is present
+print("Unique vehicle numbers in the CSV file:")
+print(df['vehicle_id'].unique())
+
 
 # Process a single row
 def process_row(row):
@@ -176,21 +189,22 @@ def process_row(row):
     result += process_mileage(row['mileage'])
     return result
 
+
 # Create a dictionary to store concatenated strings for each vehicle
 vehicle_trips = {}
 
 # Iterate over the rows and process them
-for index, row in df.head(2).iterrows():
+for index, row in df.iterrows():
     row_description = process_row(row)
     vehicle_id = str(row['vehicle_id'])  # Ensure vehicle_id is treated as string
     if vehicle_id not in vehicle_trips:
         vehicle_trips[vehicle_id] = ""
     vehicle_trips[vehicle_id] += row_description
-print(vehicle_trips[vehicle_id])
+
 # Add the concatenated strings to the travel profiles and build the trees
 for vehicle_id, trip_string in vehicle_trips.items():
-    travel_profiles.add_trip(vehicle_id, trip_string)
+    vehicle_profiles.add_trip(vehicle_id, trip_string)
 
 # Display the profile for a specific vehicle
 print("Lempel-Ziv Tree for vehicle 235268:")
-travel_profiles.display_profile("235268")
+vehicle_profiles.display_profile("235268")
