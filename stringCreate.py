@@ -194,12 +194,13 @@ def process_row(row):
 vehicle_trips = {}
 
 # Iterate over the rows and process them
-for index, row in df.iterrows():
+for index, row in df.head(2).iterrows():
     row_description = process_row(row)
     vehicle_id = str(row['vehicle_id'])  # Ensure vehicle_id is treated as string
     if vehicle_id not in vehicle_trips:
         vehicle_trips[vehicle_id] = ""
     vehicle_trips[vehicle_id] += row_description
+    print(vehicle_trips[vehicle_id])
 
 # Add the concatenated strings to the travel profiles and build the trees
 for vehicle_id, trip_string in vehicle_trips.items():

@@ -1,21 +1,27 @@
+
 class Node:
     def __init__(self, value=""):
         self.value = value
         self.children = {}
         self.probability = 0.0  # Adding a probability field
+        self.counter = 1
+        self.weight = 0.0
 
 class LempelZivTree:
     def __init__(self):
         self.root = Node()
         self.leaves_count = 1  # Start with 1 because the root is initially considered a leaf
+        self.options = []
 
     def insert(self, s):
         current = self.root
         for char in s:
+            if char not in self.options:
+                self.options.append(char)
             if char not in current.children:
                 if not current.children:  # Current node is a leaf before adding a new child
                     self.leaves_count -= 1
-                current.children[char] = Node(current.value + char)
+                current.children[char] = Node(char)
             current = current.children[char]
         if not current.children:  # Current node is a leaf after adding a new child
             self.leaves_count += 1
@@ -77,3 +83,6 @@ class VehicleProfiles:
             self.profiles[vehicle_id]["tree"].display()
         else:
             print(f"No profile found for vehicle number: {vehicle_id}")
+
+
+
