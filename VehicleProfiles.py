@@ -21,6 +21,7 @@ class LempelZivTree:
             if char not in current.children:
                 if not current.children:  # Current node is a leaf before adding a new child
                     self.leaves_count -= 1
+                    current.counter -= 1
                 current.children[char] = Node(char)
             current = current.children[char]
         if not current.children:  # Current node is a leaf after adding a new child
@@ -55,15 +56,15 @@ class LempelZivTree:
                 for child in node.children.values():
                     compute_node_probabilities(child)  # Compute probabilities for the child nodes
                     node.probability += child.probability  # Sum the probabilities of the child nodes
-
+                    node.counter += child.counter
         compute_node_probabilities(self.root)
 
     def display(self, node=None, level=0):
         if node is None:
             node = self.root
-        print(" " * level + f"{node.value} (probability: {node.probability:.4f})")
+        print(" " * level + f"{node.value} (probability: {node.probability:.4f}) (counter: {node.counter:.4f})")
         for child in node.children.values():
-            self.display(child, level + 2)
+            self.display(child, level + 4)
 
 class VehicleProfiles:
     def __init__(self):
