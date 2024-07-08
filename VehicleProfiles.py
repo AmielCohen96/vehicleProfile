@@ -1,4 +1,3 @@
-
 class Node:
     def __init__(self, value=""):
         self.value = value
@@ -6,6 +5,7 @@ class Node:
         self.probability = 0.0  # Adding a probability field
         self.counter = 1
         self.weight = 0.0
+
 
 class LempelZivTree:
     def __init__(self):
@@ -23,9 +23,22 @@ class LempelZivTree:
                     self.leaves_count -= 1
                     current.counter -= 1
                 current.children[char] = Node(char)
+
             current = current.children[char]
         if not current.children:  # Current node is a leaf after adding a new child
             self.leaves_count += 1
+
+    def add_options_to_leaves(self):
+        """ Add options to all leaf nodes including the root """
+        self._add_options_to_node(self.root)
+
+    def _add_options_to_node(self, node):
+        """ Recursively add options to all nodes starting from 'node' """
+        for option in self.options:
+            if option not in node.children:
+                node.children[option] = Node(option)
+            else:
+                self._add_options_to_node(node.children[option])
 
     def build_tree(self, s):
         i = 0
@@ -38,6 +51,7 @@ class LempelZivTree:
             if j < len(s):
                 self.insert(s[i:j + 1])
             i = j + 1
+        self._add_options_to_node(self.root)
 
     def search(self, substring):
         current = self.root
@@ -57,6 +71,7 @@ class LempelZivTree:
                     compute_node_probabilities(child)  # Compute probabilities for the child nodes
                     node.probability += child.probability  # Sum the probabilities of the child nodes
                     node.counter += child.counter
+
         compute_node_probabilities(self.root)
 
     def display(self, node=None, level=0):
@@ -65,6 +80,7 @@ class LempelZivTree:
         print(" " * level + f"{node.value} (probability: {node.probability:.4f}) (counter: {node.counter:.4f})")
         for child in node.children.values():
             self.display(child, level + 4)
+
 
 class VehicleProfiles:
     def __init__(self):
@@ -84,6 +100,3 @@ class VehicleProfiles:
             self.profiles[vehicle_id]["tree"].display()
         else:
             print(f"No profile found for vehicle number: {vehicle_id}")
-
-
-

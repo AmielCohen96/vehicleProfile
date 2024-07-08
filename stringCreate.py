@@ -166,7 +166,7 @@ def process_mileage(value):
 
 
 # Load the CSV file into a DataFrame
-csv_file_path = 'C:\\Users\\User\\PycharmProjects\\driverProfile\\data\\Trips.csv'
+csv_file_path = 'C:\\Users\\ADMIN\\Downloads\\Trips.csv'
 df = pd.read_csv(csv_file_path, low_memory=False)
 
 # Initialize VehicleProfiles
