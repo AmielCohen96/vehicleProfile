@@ -51,7 +51,7 @@ class LempelZivTree:
             if j < len(s):
                 self.insert(s[i:j + 1])
             i = j + 1
-        self._add_options_to_node(self.root)
+
 
     def search(self, substring):
         current = self.root
@@ -74,10 +74,22 @@ class LempelZivTree:
 
         compute_node_probabilities(self.root)
 
+    def compute_weights(self):
+        """ Compute weights for all nodes in the tree """
+
+        def compute_node_weights(node):
+            max_probability = 1.0
+            for child in node.children.values():
+                child.weight = max_probability * child.probability  # Calculate weight based on child's probability
+                compute_node_weights(child)  # Recursively compute weights for children
+
+        compute_node_weights(self.root)
+
     def display(self, node=None, level=0):
         if node is None:
             node = self.root
-        print(" " * level + f"{node.value} (probability: {node.probability:.4f}) (counter: {node.counter:.4f})")
+        print(" " * level + f"{node.value} (probability: {node.probability:.4f}) (counter: {node.counter:.4f})"
+                            f" (weight: {node.weight:.4f})")
         for child in node.children.values():
             self.display(child, level + 4)
 
@@ -92,7 +104,9 @@ class VehicleProfiles:
             self.profiles[vehicle_id] = {"trip_string": "", "tree": LempelZivTree()}
         self.profiles[vehicle_id]["trip_string"] += trip
         self.profiles[vehicle_id]["tree"].build_tree(self.profiles[vehicle_id]["trip_string"])
+        self.profiles[vehicle_id]["tree"].add_options_to_leaves()
         self.profiles[vehicle_id]["tree"].compute_probabilities()
+        self.profiles[vehicle_id]["tree"].compute_weights()
 
     def display_profile(self, vehicle_id: str):
         vehicle_id = str(vehicle_id)  # Ensure consistency in data type
