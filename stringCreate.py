@@ -33,7 +33,7 @@ def grid_to_letters(x_index, y_index):
 
 
 def categorize_time(time_str):
-    time_format = "%d/%m/%Y %H:%M"
+    time_format = "%d/%m/%Y %H:%M"  # Adjusted to match your CSV format
     try:
         time_obj = datetime.strptime(time_str, time_format)
     except ValueError:
@@ -106,7 +106,7 @@ def process_drive_duration(value):
 
 def process_idle_duration(value):
     try:
-        duration = float(value)
+        duration = float(value)  # Convert to float to handle potential decimal values
     except ValueError:
         print(f"Invalid idle duration value: '{value}', setting to default.")
         return "n"
@@ -133,7 +133,7 @@ def process_idle_duration(value):
 
 def process_mileage(value):
     try:
-        duration = float(value)
+        duration = float(value)  # Convert to float to handle potential decimal values
     except ValueError:
         print(f"Invalid mileage value: '{value}', setting to default.")
         return "n"
@@ -165,12 +165,16 @@ def process_mileage(value):
     return "n"  # Handle any unexpected value
 
 
-# Initialize VehicleProfiles
-vehicle_profiles = VehicleProfiles()
-
 # Load the CSV file into a DataFrame
 csv_file_path = 'data/Trips.csv'
 df = pd.read_csv(csv_file_path, low_memory=False)
+
+# Initialize VehicleProfiles
+vehicle_profiles = VehicleProfiles()
+
+# Print unique vehicle numbers to verify 235268 is present
+print("Unique vehicle numbers in the CSV file:")
+print(df['vehicle_id'].unique())
 
 
 # Process a single row
@@ -194,8 +198,9 @@ for index, row in df.iterrows():
     if vehicle_id not in vehicle_trips:
         vehicle_trips[vehicle_id] = ""
     vehicle_trips[vehicle_id] += row_description
+    print(vehicle_trips[vehicle_id])
 
-# בניית עצי הסתברות לכל רכב
+# Add the concatenated strings to the travel profiles and build the trees
 for vehicle_id, trip_string in vehicle_trips.items():
     vehicle_profiles.add_trip(vehicle_id, trip_string)
 
@@ -209,7 +214,6 @@ for index, row in df.head(1300).iterrows():
     probability = vehicle_profiles.calculate_probability_for_vehicle(vehicle_id_to_check, row_description)
     is_belongs = (actual_vehicle_id == vehicle_id_to_check)  # לבדוק אם הנסיעה היא של רכב 235268
     all_trip_probabilities.append((row_description, probability, is_belongs))
-
 
 # מיון הרשימה לפי הסתברות בסדר יורד
 sorted_trip_probabilities = sorted(all_trip_probabilities, key=lambda x: x[1], reverse=True)
@@ -232,6 +236,4 @@ df_output = pd.DataFrame({
 output_excel_file = 'output_trip_probabilities.xlsx'
 df_output.to_excel(output_excel_file, index=False)
 
-
 print(f"Results saved to {output_excel_file}")
-
