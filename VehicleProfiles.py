@@ -52,7 +52,6 @@ class LempelZivTree:
                 self.insert(s[i:j + 1])
             i = j + 1
 
-
     def search(self, substring):
         current = self.root
         for char in substring:
@@ -93,6 +92,20 @@ class LempelZivTree:
         for child in node.children.values():
             self.display(child, level + 4)
 
+    def calculate_string_probability(self, vehicle_id, string):
+        current = self.root
+        probability = 100000.0
+        i = 0
+        while i < len(string):
+            if string[i] in current.children:
+                current = current.children[string[i]]
+                probability *= current.weight
+                i += 1
+            else:
+                current = self.root
+        # print(f"Calculated probability for vehicle {vehicle_id}: {probability}")
+        return probability
+
 
 class VehicleProfiles:
     def __init__(self):
@@ -114,3 +127,21 @@ class VehicleProfiles:
             self.profiles[vehicle_id]["tree"].display()
         else:
             print(f"No profile found for vehicle number: {vehicle_id}")
+
+    def calculate_probability_for_vehicle(self, vehicle_id: str, string: str):
+        if vehicle_id in self.profiles:
+            return self.profiles[vehicle_id]["tree"].calculate_string_probability(vehicle_id, string)
+        else:
+            print(f"No profile found for vehicle number: {vehicle_id}")
+            return 0.0
+
+    def get_sorted_trip_probabilities(self, vehicle_id, trips):
+        trip_probabilities = []
+        for trip_string, actual_vehicle_id in trips:
+            probability = self.calculate_probability_for_vehicle(vehicle_id, trip_string)
+            is_belongs = (vehicle_id == actual_vehicle_id)
+            trip_probabilities.append((trip_string, probability, is_belongs))
+
+        # Sort list by probability in descending order
+        sorted_trip_probabilities = sorted(trip_probabilities, key=lambda x: x[1], reverse=True)
+        return sorted_trip_probabilities

@@ -33,7 +33,7 @@ def grid_to_letters(x_index, y_index):
 
 
 def categorize_time(time_str):
-    time_format = "%d/%m/%Y %H:%M"  # Adjusted to match your CSV format
+    time_format = "%d/%m/%Y %H:%M"
     try:
         time_obj = datetime.strptime(time_str, time_format)
     except ValueError:
@@ -106,7 +106,7 @@ def process_drive_duration(value):
 
 def process_idle_duration(value):
     try:
-        duration = float(value)  # Convert to float to handle potential decimal values
+        duration = float(value)
     except ValueError:
         print(f"Invalid idle duration value: '{value}', setting to default.")
         return "n"
@@ -133,7 +133,7 @@ def process_idle_duration(value):
 
 def process_mileage(value):
     try:
-        duration = float(value)  # Convert to float to handle potential decimal values
+        duration = float(value)
     except ValueError:
         print(f"Invalid mileage value: '{value}', setting to default.")
         return "n"
@@ -165,16 +165,12 @@ def process_mileage(value):
     return "n"  # Handle any unexpected value
 
 
-# Load the CSV file into a DataFrame
-csv_file_path = 'C:\\Users\\ADMIN\\Downloads\\Trips.csv'
-df = pd.read_csv(csv_file_path, low_memory=False)
-
 # Initialize VehicleProfiles
 vehicle_profiles = VehicleProfiles()
 
-# Print unique vehicle numbers to verify 235268 is present
-print("Unique vehicle numbers in the CSV file:")
-print(df['vehicle_id'].unique())
+# Load the CSV file into a DataFrame
+csv_file_path = 'data/Trips.csv'
+df = pd.read_csv(csv_file_path, low_memory=False)
 
 
 # Process a single row
@@ -190,22 +186,52 @@ def process_row(row):
     return result
 
 
-# Create a dictionary to store concatenated strings for each vehicle
+# שלב ראשון: יצירת פרופיל לכל רכב
 vehicle_trips = {}
-
-# Iterate over the rows and process them
-for index, row in df.head(2).iterrows():
+for index, row in df.iterrows():
     row_description = process_row(row)
     vehicle_id = str(row['vehicle_id'])  # Ensure vehicle_id is treated as string
     if vehicle_id not in vehicle_trips:
         vehicle_trips[vehicle_id] = ""
     vehicle_trips[vehicle_id] += row_description
-    print(vehicle_trips[vehicle_id])
 
-# Add the concatenated strings to the travel profiles and build the trees
+# בניית עצי הסתברות לכל רכב
 for vehicle_id, trip_string in vehicle_trips.items():
     vehicle_profiles.add_trip(vehicle_id, trip_string)
 
-# Display the profile for a specific vehicle
-print("Lempel-Ziv Tree for vehicle 235268:")
-vehicle_profiles.display_profile("235268")
+# שלב שני: חישוב הסתברות עבור נסיעות לפי רכב 235268
+vehicle_id_to_check = "235268"
+all_trip_probabilities = []
+
+for index, row in df.head(1300).iterrows():
+    row_description = process_row(row)
+    actual_vehicle_id = str(row['vehicle_id'])
+    probability = vehicle_profiles.calculate_probability_for_vehicle(vehicle_id_to_check, row_description)
+    is_belongs = (actual_vehicle_id == vehicle_id_to_check)  # לבדוק אם הנסיעה היא של רכב 235268
+    all_trip_probabilities.append((row_description, probability, is_belongs))
+
+
+# מיון הרשימה לפי הסתברות בסדר יורד
+sorted_trip_probabilities = sorted(all_trip_probabilities, key=lambda x: x[1], reverse=True)
+
+# הדפסת הרשימה עם מספר אינדקס
+# print(f"Sorted trip probabilities for vehicle {vehicle_id_to_check}:")
+# for idx, (trip_string, probability, is_belongs) in enumerate(sorted_trip_probabilities, start=1):
+#     belongs_status = "Belongs" if is_belongs else "Doesn't belong"
+#     print(f"{idx}. Trip: {trip_string}, Probability: {probability}, {belongs_status}")
+
+# יצירת DataFrame עבור הקובץ
+df_output = pd.DataFrame({
+    'Index': range(1, len(sorted_trip_probabilities) + 1),
+    'Trip String': [x[0] for x in sorted_trip_probabilities],
+    'Probability': [x[1] for x in sorted_trip_probabilities],
+    'Belongs to Vehicle 235268': ['Belongs' if x[2] else "Doesn't belong" for x in sorted_trip_probabilities]
+})
+
+# שמירת התוצאות לקובץ Excel
+output_excel_file = 'output_trip_probabilities.xlsx'
+df_output.to_excel(output_excel_file, index=False)
+
+
+print(f"Results saved to {output_excel_file}")
+
