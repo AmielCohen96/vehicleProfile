@@ -6,7 +6,7 @@ from openpyxl import load_workbook
 from openpyxl.drawing.image import Image
 
 
-def process_excel_with_roc(file_path, thresholds, vehicle_col, belongs_value="Belongs"):
+def process_excel_with_roc(file_path, vehicle_col, belongs_value="Belongs"):
     # Load the Excel file into a DataFrame
     df = pd.read_excel(file_path)
 
@@ -20,45 +20,49 @@ def process_excel_with_roc(file_path, thresholds, vehicle_col, belongs_value="Be
     for header in new_headers:
         df[header] = np.nan
 
-    # Calculate the metrics for each threshold
-    for threshold in thresholds:
-        tp = tn = fp = fn = 0
-        numeric_column = 'Probability'  # Replace this with your actual numeric column
-
-        for _, row in df.iterrows():
-            value = row[vehicle_col]
-            num_value = row[numeric_column]
-
-            if num_value > threshold:
-                if value == belongs_value:
-                    tp += 1
-                else:
-                    tn += 1
-            else:
-                if value == belongs_value:
-                    fp += 1
-                else:
-                    fn += 1
-
-        # Calculate metrics
-        recall = tp / (tp + fn) if tp + fn > 0 else 0
-        precision = tp / (tp + fp) if tp + fp > 0 else 0
-        specificity = tn / (tn + fp) if tn + fp > 0 else 0
-
-        # Add values to the DataFrame
-        new_data = {'Threshold': threshold, 'TP': tp, 'TN': tn, 'FP': fp, 'FN': fn,
-                    'Recall': recall, 'Precision': precision, 'Specificity': specificity}
-        first_empty_row = df[df['Threshold'].isna()].index[0]
-        for header, value in new_data.items():
-            df.at[first_empty_row, header] = value
-
-    # Now calculate ROC and AUC
+    # Convert labels to binary
     true_labels = np.where(df[vehicle_col] == belongs_value, 1, 0)  # Convert to binary labels
-    probabilities = df['Probability'].values  # Replace 'Index' with your numeric score column
+    probabilities = df['Probability'].values  # Replace 'Probability' with your numeric score column
 
     # Compute ROC curve
-    fpr, tpr, _ = roc_curve(true_labels, probabilities)
+    fpr, tpr, thresholds = roc_curve(true_labels, probabilities)
     auc_value = roc_auc_score(true_labels, probabilities)
+
+        # Find the optimal threshold based on Youden's J statistic
+    j_scores = tpr - fpr
+    optimal_idx = np.argmax(j_scores)
+    optimal_threshold = thresholds[optimal_idx]
+
+    print(f"Optimal threshold: {optimal_threshold}")
+
+    # Calculate metrics for the optimal threshold
+    tp = tn = fp = fn = 0
+    for _, row in df.iterrows():
+        value = row[vehicle_col]
+        num_value = row['Probability']
+
+        if num_value > optimal_threshold:
+            if value == belongs_value:
+                tp += 1
+            else:
+                tn += 1
+        else:
+            if value == belongs_value:
+                fp += 1
+            else:
+                fn += 1
+
+    # Calculate metrics
+    recall = tp / (tp + fn) if tp + fn > 0 else 0
+    precision = tp / (tp + fp) if tp + fp > 0 else 0
+    specificity = tn / (tn + fp) if tn + fp > 0 else 0
+
+    # Add values to the DataFrame for the optimal threshold
+    new_data = {'Threshold': optimal_threshold, 'TP': tp, 'TN': tn, 'FP': fp, 'FN': fn,
+                'Recall': recall, 'Precision': precision, 'Specificity': specificity}
+    first_empty_row = df[df['Threshold'].isna()].index[0]
+    for header, value in new_data.items():
+        df.at[first_empty_row, header] = value
 
     # Plot the ROC curve
     plt.figure()
@@ -77,7 +81,8 @@ def process_excel_with_roc(file_path, thresholds, vehicle_col, belongs_value="Be
     plt.close()
 
     # Save the updated DataFrame back to Excel
-    output_file = 'output_with_roc.xlsx'
+    # שמירת התוצאות לקובץ Excel עם הנתיב שהוגדר
+    output_file = r'C:\Users\ADMIN\PycharmProjects\vehicleProfile\output_with_roc.xlsx'
     df.to_excel(output_file, index=False)
 
     # Insert the ROC curve image into the Excel file
@@ -90,7 +95,6 @@ def process_excel_with_roc(file_path, thresholds, vehicle_col, belongs_value="Be
     workbook.save(output_file)
 
 
-# Example usage
-file_path = 'output_trip_probabilities.xlsx'
-thresholds = [0.00001, 0.00002, 0.00005]
-process_excel_with_roc(file_path, thresholds, 'Belongs to Vehicle 235268')
+# Example usage:
+# process_excel_with_roc('input_file.xlsx', vehicle_col='VehicleID', belongs_value='Belongs')
+process_excel_with_roc('output_trip_probabilities.xlsx', vehicle_col='Belongs to Vehicle 235268', belongs_value='Belongs')

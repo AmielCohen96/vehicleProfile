@@ -1,39 +1,37 @@
+import gc
+
 class Node:
     def __init__(self, value=""):
         self.value = value
         self.children = {}
-        self.probability = 0.0  # Adding a probability field
+        self.probability = 0.0
         self.counter = 1
         self.weight = 0.0
-
 
 class LempelZivTree:
     def __init__(self):
         self.root = Node()
-        self.leaves_count = 1  # Start with 1 because the root is initially considered a leaf
-        self.options = []
+        self.leaves_count = 1
+        self.options = set()  # Use a set for faster lookups
 
     def insert(self, s):
         current = self.root
         for char in s:
             if char not in self.options:
-                self.options.append(char)
+                self.options.add(char)
             if char not in current.children:
-                if not current.children:  # Current node is a leaf before adding a new child
+                if not current.children:
                     self.leaves_count -= 1
                     current.counter -= 1
                 current.children[char] = Node(char)
-
             current = current.children[char]
-        if not current.children:  # Current node is a leaf after adding a new child
+        if not current.children:
             self.leaves_count += 1
 
     def add_options_to_leaves(self):
-        """ Add options to all leaf nodes including the root """
         self._add_options_to_node(self.root)
 
     def _add_options_to_node(self, node):
-        """ Recursively add options to all nodes starting from 'node' """
         for option in self.options:
             if option not in node.children:
                 node.children[option] = Node(option)
@@ -62,26 +60,22 @@ class LempelZivTree:
 
     def compute_probabilities(self):
         def compute_node_probabilities(node):
-            if not node.children:  # If the node is a leaf
+            if not node.children:
                 node.probability = 1.0 / self.leaves_count
             else:
                 node.probability = 0.0
                 for child in node.children.values():
-                    compute_node_probabilities(child)  # Compute probabilities for the child nodes
-                    node.probability += child.probability  # Sum the probabilities of the child nodes
+                    compute_node_probabilities(child)
+                    node.probability += child.probability
                     node.counter += child.counter
-
         compute_node_probabilities(self.root)
 
     def compute_weights(self):
-        """ Compute weights for all nodes in the tree """
-
         def compute_node_weights(node):
             max_probability = 1.0
             for child in node.children.values():
-                child.weight = max_probability * child.probability  # Calculate weight based on child's probability
-                compute_node_weights(child)  # Recursively compute weights for children
-
+                child.weight = max_probability * child.probability
+                compute_node_weights(child)
         compute_node_weights(self.root)
 
     def display(self, node=None, level=0):
@@ -103,16 +97,14 @@ class LempelZivTree:
                 i += 1
             else:
                 current = self.root
-        # print(f"Calculated probability for vehicle {vehicle_id}: {probability}")
         return probability
-
 
 class VehicleProfiles:
     def __init__(self):
         self.profiles = {}
 
     def add_trip(self, vehicle_id: str, trip: str):
-        vehicle_id = str(vehicle_id)  # Ensure consistency in data type
+        vehicle_id = str(vehicle_id)
         if vehicle_id not in self.profiles:
             self.profiles[vehicle_id] = {"trip_string": "", "tree": LempelZivTree()}
         self.profiles[vehicle_id]["trip_string"] += trip
@@ -120,9 +112,10 @@ class VehicleProfiles:
         self.profiles[vehicle_id]["tree"].add_options_to_leaves()
         self.profiles[vehicle_id]["tree"].compute_probabilities()
         self.profiles[vehicle_id]["tree"].compute_weights()
+        gc.collect()  # Collect garbage to free up memory
 
     def display_profile(self, vehicle_id: str):
-        vehicle_id = str(vehicle_id)  # Ensure consistency in data type
+        vehicle_id = str(vehicle_id)
         if vehicle_id in self.profiles:
             self.profiles[vehicle_id]["tree"].display()
         else:
@@ -141,7 +134,5 @@ class VehicleProfiles:
             probability = self.calculate_probability_for_vehicle(vehicle_id, trip_string)
             is_belongs = (vehicle_id == actual_vehicle_id)
             trip_probabilities.append((trip_string, probability, is_belongs))
-
-        # Sort list by probability in descending order
         sorted_trip_probabilities = sorted(trip_probabilities, key=lambda x: x[1], reverse=True)
         return sorted_trip_probabilities
