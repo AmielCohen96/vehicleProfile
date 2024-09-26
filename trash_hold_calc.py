@@ -7,7 +7,7 @@ from openpyxl.drawing.image import Image
 
 def process_excel_with_roc(file_path, vehicle_col, belongs_value="Belongs"):
     # Load the Excel file into a DataFrame
-    df = pd.read_excel(file_path)
+    df = file_path
 
     # Create space for new headers and columns
     existing_columns = df.shape[1]
@@ -27,6 +27,21 @@ def process_excel_with_roc(file_path, vehicle_col, belongs_value="Belongs"):
     if np.any(np.isnan(probabilities)) or np.any(np.isinf(probabilities)):
         raise ValueError("Probability column contains invalid values.")
 
+    # Calculate the number of rows to use for each group (half the total)
+    total_rows = df.shape[0]
+    half_count = total_rows // 2
+
+    # Split the DataFrame into two groups based on the belongs_value
+    belongs_df = df[df[vehicle_col] == belongs_value].head(half_count)
+    not_belongs_df = df[df[vehicle_col] != belongs_value].head(half_count)
+
+    # Combine the two groups
+    combined_df = pd.concat([belongs_df, not_belongs_df])
+
+    # Update true_labels for the combined DataFrame
+    true_labels = np.where(combined_df[vehicle_col] == belongs_value, 1, 0)
+    probabilities = combined_df['Probability'].values
+
     # Compute ROC curve
     fpr, tpr, thresholds = roc_curve(true_labels, probabilities)
     auc_value = roc_auc_score(true_labels, probabilities)
@@ -40,7 +55,7 @@ def process_excel_with_roc(file_path, vehicle_col, belongs_value="Belongs"):
 
     # Calculate metrics for the optimal threshold
     tp = tn = fp = fn = 0
-    for _, row in df.iterrows():
+    for _, row in combined_df.iterrows():
         value = row[vehicle_col]
         num_value = row['Probability']
 
@@ -78,13 +93,14 @@ def process_excel_with_roc(file_path, vehicle_col, belongs_value="Belongs"):
     plt.title('ROC Curve')
     plt.legend(loc="lower right")
 
+
     # Save the plot as an image
-    roc_curve_image = 'roc_curve.png'
+    roc_curve_image = 'media/roc_curve.png'
     plt.savefig(roc_curve_image)
     plt.close()
 
     # Save the updated DataFrame back to Excel
-    output_file = r'data/output_with_roc.xlsx'
+    output_file = r'data/output_with_roc.xlsx'  # משתמשים בשם קובץ זה
     df.to_excel(output_file, index=False)
 
     # Insert the ROC curve image into the Excel file
@@ -95,6 +111,3 @@ def process_excel_with_roc(file_path, vehicle_col, belongs_value="Belongs"):
 
     # Save the Excel file with the image
     workbook.save(output_file)
-
-# Example usage:
-process_excel_with_roc('data/output_trip_probabilities.xlsx', vehicle_col='Belongs to Vehicle 235268', belongs_value='Belongs')

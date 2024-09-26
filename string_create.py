@@ -99,68 +99,68 @@ def check_trip_and_add_to_tree(vehicle_profiles, vehicle_id, trip_string):
 
     return probability > threshold  # מחזיר אם הנסיעה התקבלה או לא
 
-
-# Load the CSV file into a DataFrame
-csv_file_path = 'data/Trips.csv'
-df = pd.read_csv(csv_file_path, low_memory=False)
-
-# Initialize VehicleProfiles
-vehicle_profiles = VehicleProfiles()
-
-# Process the entire DataFrame at once
-df['trip_description'] = df.apply(process_row, axis=1)
-
-# Create the vehicle profiles
-vehicle_trips = df.groupby('vehicle_id')['trip_description'].apply(''.join).to_dict()
-for vehicle_id, trip_string in vehicle_trips.items():
-    vehicle_profiles.add_trip(vehicle_id, trip_string)
-
-# Calculate probabilities
-vehicle_id_to_check = "235268"
-df_check = df.head(1500).copy()
-# יש לוודא שהחישוב קורה רק אם יש ממצאים לעץ
-df_check['probability'] = df_check['trip_description'].apply(
-    lambda trip_desc: vehicle_profiles.calculate_probability_for_vehicle(vehicle_id_to_check,trip_desc)
-)
-
-# לדוגמה, המרת ערכים קטנים מאוד לפורמט מספרי ברור יותר (למניעת תצוגה של 0)
-df_check['Belongs_to_vehicle'] = df_check['vehicle_id'].astype(str) == vehicle_id_to_check
-
-# Create DataFrame for output
-df_output = pd.DataFrame({
-    'Index': range(1, len(df_check) + 1),
-    'Trip String': df_check['trip_description'].values,
-    'Probability': df_check['probability'].values,
-    'Belongs to Vehicle 235268': ['Belongs' if x else "Doesn't belong" for x in df_check['Belongs_to_vehicle']]
-})
-
-# Save to Excel
-output_excel_file = 'data/output_trip_probabilities.xlsx'
-df_output.to_excel(output_excel_file, index=False)
-print(f"Results saved to {output_excel_file}")
-
-while True:
-        # קבלת מספר רכב מהמשתמש
-        vehicle_id = input("Please enter the vehicle ID (or 'exit' to quit): ")
-        if vehicle_id.lower() == 'exit':
-            print("Exiting the program.")
-            break
-
-        # וידוא שמספר הרכב קיים בפרופילים
-        if vehicle_id not in vehicle_profiles.profiles:
-            print(f"No profile found for vehicle ID: {vehicle_id}")
-            continue
-
-        # קבלת מחרוזת נסיעה מהמשתמש
-        trip_string = input("Please enter the trip string to check: ")
-
-        # חישוב הסתברות למחרוזת והשוואה לערך הסף
-        accepted = check_trip_and_add_to_tree(vehicle_profiles, vehicle_id, trip_string)
-
-        # שאלת המשתמש אם ברצונו לבדוק נסיעה נוספת
-        check_another = input("Do you want to check another trip? (yes/no): ")
-        if check_another.lower() != 'yes':
-            print("Exiting the program.")
-            break
-
-
+#
+# # Load the CSV file into a DataFrame
+# csv_file_path = 'data/Trips.csv'
+# df = pd.read_csv(csv_file_path, low_memory=False)
+#
+# # Initialize VehicleProfiles
+# vehicle_profiles = VehicleProfiles()
+#
+# # Process the entire DataFrame at once
+# df['trip_description'] = df.apply(process_row, axis=1)
+#
+# # Create the vehicle profiles
+# vehicle_trips = df.groupby('vehicle_id')['trip_description'].apply(''.join).to_dict()
+# for vehicle_id, trip_string in vehicle_trips.items():
+#     vehicle_profiles.add_trip(vehicle_id, trip_string)
+#
+# # Calculate probabilities
+# vehicle_id_to_check = "235268"
+# df_check = df.head(1500).copy()
+# # יש לוודא שהחישוב קורה רק אם יש ממצאים לעץ
+# df_check['probability'] = df_check['trip_description'].apply(
+#     lambda trip_desc: vehicle_profiles.calculate_probability_for_vehicle(vehicle_id_to_check,trip_desc)
+# )
+#
+# # לדוגמה, המרת ערכים קטנים מאוד לפורמט מספרי ברור יותר (למניעת תצוגה של 0)
+# df_check['Belongs_to_vehicle'] = df_check['vehicle_id'].astype(str) == vehicle_id_to_check
+#
+# # Create DataFrame for output
+# df_output = pd.DataFrame({
+#     'Index': range(1, len(df_check) + 1),
+#     'Trip String': df_check['trip_description'].values,
+#     'Probability': df_check['probability'].values,
+#     'Belongs to Vehicle 235268': ['Belongs' if x else "Doesn't belong" for x in df_check['Belongs_to_vehicle']]
+# })
+#
+# # Save to Excel
+# output_excel_file = 'data/output_trip_probabilities.xlsx'
+# df_output.to_excel(output_excel_file, index=False)
+# print(f"Results saved to {output_excel_file}")
+#
+# while True:
+#         # קבלת מספר רכב מהמשתמש
+#         vehicle_id = input("Please enter the vehicle ID (or 'exit' to quit): ")
+#         if vehicle_id.lower() == 'exit':
+#             print("Exiting the program.")
+#             break
+#
+#         # וידוא שמספר הרכב קיים בפרופילים
+#         if vehicle_id not in vehicle_profiles.profiles:
+#             print(f"No profile found for vehicle ID: {vehicle_id}")
+#             continue
+#
+#         # קבלת מחרוזת נסיעה מהמשתמש
+#         trip_string = input("Please enter the trip string to check: ")
+#
+#         # חישוב הסתברות למחרוזת והשוואה לערך הסף
+#         accepted = check_trip_and_add_to_tree(vehicle_profiles, vehicle_id, trip_string)
+#
+#         # שאלת המשתמש אם ברצונו לבדוק נסיעה נוספת
+#         check_another = input("Do you want to check another trip? (yes/no): ")
+#         if check_another.lower() != 'yes':
+#             print("Exiting the program.")
+#             break
+#
+#
