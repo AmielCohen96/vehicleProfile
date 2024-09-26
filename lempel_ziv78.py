@@ -130,20 +130,20 @@ class LempelZivTree:
             print(f"Child '{child.value}' has {child_children_count} children.")
 
 
-
-# דוגמה לשימוש
-tree = LempelZivTree()
-tree.build_tree("aabdbbacbbda")
-
-# חישוב המשקלים
-tree.calculate_weights()
-
-# הדפסת מבנה העץ עם המשקלים
-tree.print_tree()
-
-# הדפסת הסיכום
-tree.print_summary()
-
-# חישוב הסתברות למחרוזת מסוימת
-sequence_probability = tree.calculate_sequence_probability("bdca")
-print(f"The probability of the sequence 'bdca' is: {sequence_probability}")
+#
+# # דוגמה לשימוש
+# tree = LempelZivTree()
+# tree.build_tree("aabdbbacbbda")
+#
+# # חישוב המשקלים
+# tree.calculate_weights()
+#
+# # הדפסת מבנה העץ עם המשקלים
+# tree.print_tree()
+#
+# # הדפסת הסיכום
+# tree.print_summary()
+#
+# # חישוב הסתברות למחרוזת מסוימת
+# sequence_probability = tree.calculate_sequence_probability("bdca")
+# print(f"The probability of the sequence 'bdca' is: {sequence_probability}")

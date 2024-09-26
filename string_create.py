@@ -78,6 +78,28 @@ def process_row(row):
         process_mileage(row['mileage'])
     )
 
+
+# פונקציה לבדיקת הסתברות מחרוזת עבור מספר רכב
+def check_trip_and_add_to_tree(vehicle_profiles, vehicle_id, trip_string):
+    # לחשב את ההסתברות של הנסיעה
+    probability = vehicle_profiles.calculate_probability_for_vehicle(vehicle_id, trip_string)
+
+    # ערך הסף של הרכב
+    threshold = vehicle_profiles.get_threshold(vehicle_id)
+
+    # הדפסת ההסתברות והסף
+    print(f"Probability of trip: {probability}, Threshold for vehicle {vehicle_id}: {threshold}")
+
+    # בדיקה אם ההסתברות גבוהה מהסף
+    if probability > threshold:
+        print(f"Trip accepted for vehicle {vehicle_id}, adding to tree.")
+        vehicle_profiles.add_trip(vehicle_id, trip_string)  # הוספת הנסיעה לעץ
+    else:
+        print(f"Trip rejected for vehicle {vehicle_id}. Probability too low.")
+
+    return probability > threshold  # מחזיר אם הנסיעה התקבלה או לא
+
+
 # Load the CSV file into a DataFrame
 csv_file_path = 'data/Trips.csv'
 df = pd.read_csv(csv_file_path, low_memory=False)
@@ -117,5 +139,28 @@ output_excel_file = 'data/output_trip_probabilities.xlsx'
 df_output.to_excel(output_excel_file, index=False)
 print(f"Results saved to {output_excel_file}")
 
+while True:
+        # קבלת מספר רכב מהמשתמש
+        vehicle_id = input("Please enter the vehicle ID (or 'exit' to quit): ")
+        if vehicle_id.lower() == 'exit':
+            print("Exiting the program.")
+            break
+
+        # וידוא שמספר הרכב קיים בפרופילים
+        if vehicle_id not in vehicle_profiles.profiles:
+            print(f"No profile found for vehicle ID: {vehicle_id}")
+            continue
+
+        # קבלת מחרוזת נסיעה מהמשתמש
+        trip_string = input("Please enter the trip string to check: ")
+
+        # חישוב הסתברות למחרוזת והשוואה לערך הסף
+        accepted = check_trip_and_add_to_tree(vehicle_profiles, vehicle_id, trip_string)
+
+        # שאלת המשתמש אם ברצונו לבדוק נסיעה נוספת
+        check_another = input("Do you want to check another trip? (yes/no): ")
+        if check_another.lower() != 'yes':
+            print("Exiting the program.")
+            break
 
 
