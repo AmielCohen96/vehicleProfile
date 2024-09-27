@@ -5,15 +5,18 @@ from trash_hold_calc import process_excel_with_roc
 from openpyxl.drawing.image import Image
 import os
 
+
 def load_csv(csv_file_path: str) -> pd.DataFrame:
     """Loads a CSV file into a DataFrame."""
     return pd.read_csv(csv_file_path, low_memory=False)
+
 
 def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Processes the DataFrame by creating a trip description column."""
     if 'trip_description' not in df.columns:
         df['trip_description'] = df.apply(process_row, axis=1)
     return df
+
 
 def create_vehicle_profiles(df: pd.DataFrame) -> VehicleProfiles:
     """Creates vehicle profiles based on trip descriptions."""
@@ -25,7 +28,9 @@ def create_vehicle_profiles(df: pd.DataFrame) -> VehicleProfiles:
 
     return vehicle_profiles
 
-def calculate_probabilities(df: pd.DataFrame, vehicle_profiles: VehicleProfiles, vehicle_id_to_check: str) -> pd.DataFrame:
+
+def calculate_probabilities(df: pd.DataFrame, vehicle_profiles: VehicleProfiles,
+                            vehicle_id_to_check: str) -> pd.DataFrame:
     """Calculates the probability for a specific vehicle across the DataFrame."""
     df['probability'] = df['trip_description'].apply(
         lambda trip_desc: vehicle_profiles.calculate_probability_for_vehicle(vehicle_id_to_check, trip_desc)
@@ -33,6 +38,7 @@ def calculate_probabilities(df: pd.DataFrame, vehicle_profiles: VehicleProfiles,
 
     df['Belongs_to_vehicle'] = df['vehicle_id'].astype(str) == vehicle_id_to_check
     return df
+
 
 def create_output_dataframe(df: pd.DataFrame, vehicle_id_to_check: str) -> pd.DataFrame:
     """Creates the output DataFrame for saving to Excel."""
@@ -45,8 +51,9 @@ def create_output_dataframe(df: pd.DataFrame, vehicle_id_to_check: str) -> pd.Da
         ]
     })
 
-def process_and_save_results(writer, df_output: pd.DataFrame, vehicle_id_to_check: str, output_dir: str = 'media'):
-    """Processes the DataFrame with ROC and saves it to an Excel sheet."""
+
+def process_and_save_results(writer, df_output: pd.DataFrame, vehicle_id_to_check: str, vehicle_profiles: VehicleProfiles, output_dir: str = 'media'):
+    """Processes the DataFrame with ROC and saves it to an Excel sheet, and updates the vehicle profile threshold."""
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
@@ -57,11 +64,19 @@ def process_and_save_results(writer, df_output: pd.DataFrame, vehicle_id_to_chec
             vehicle_col=f'Belongs to Vehicle {vehicle_id_to_check}',
             belongs_value='Belongs',
             vehicle_id=vehicle_id_to_check,
-            output_dir=output_dir
+            output_dir=output_dir,
         )
     except ValueError as e:
         print(f"Skipping ROC for vehicle {vehicle_id_to_check} due to error: {e}")
         roc_curve_image = None
+        return  # במקרה של שגיאה, לא להמשיך כדי להימנע מעדכון שגוי של הסף
+
+    # עדכון threshold בפרופיל של הרכב לאחר החישוב
+    optimal_threshold = df_output['Threshold'].dropna().iloc[0]  # הנחת שזה הערך שחושב
+    vehicle_profiles.set_threshold(vehicle_id_to_check, optimal_threshold)
+
+    # הדפסת פרופיל הרכב לאחר העדכון
+    vehicle_profiles.display_profile(vehicle_id_to_check)
 
     # Save DataFrame to the specific sheet
     sheet_name = f'Vehicle_{vehicle_id_to_check}'
@@ -103,7 +118,6 @@ def create_file():
             vehicle_id_to_check = vehicle_id
 
             # Step 4: Calculate probabilities for vehicle_id_to_check
-            # To compute ROC, we need both positive and negative samples
             df_belongs = df[df['vehicle_id'].astype(str) == vehicle_id_to_check].copy()
             df_not_belongs = df[df['vehicle_id'].astype(str) != vehicle_id_to_check].copy()
 
@@ -122,8 +136,7 @@ def create_file():
             # Step 6: Create output DataFrame
             df_output = create_output_dataframe(df_check, vehicle_id_to_check)
 
-            # Step 7: Process and save results, including inserting ROC image
-            process_and_save_results(writer, df_output, vehicle_id_to_check)
+            # Step 7: Process and save results, including inserting ROC image and updating threshold
+            process_and_save_results(writer, df_output, vehicle_id_to_check, vehicle_profiles)
 
     print(f"Results saved to {output_excel_file}")
-

@@ -3,18 +3,10 @@ from vehicle_profiles import VehicleProfiles
 
 
 def main():
-
-    vehicle_profiles = VehicleProfiles()
-
-
-
-    #start the process of creating the file
+    # Start the process of creating the file
     create_file()
 
-    print(vehicle_profiles.profiles is not None)
-
-
-
+    print("Process completed.")
 
 
 if __name__ == "__main__":

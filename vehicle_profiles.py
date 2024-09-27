@@ -55,3 +55,10 @@ class VehicleProfiles:
             self.profiles[vehicle_id]["threshold"] = new_threshold
         else:
             print(f"No profile found for vehicle number: {vehicle_id}")
+
+    def update_threshold(self, vehicle_id, new_threshold):
+        if vehicle_id in self.profiles:
+            self.profiles[vehicle_id]['threshold'] = new_threshold
+        else:
+            print(f"No profile found for vehicle {vehicle_id}")
+

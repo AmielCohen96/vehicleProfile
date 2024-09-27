@@ -1,5 +1,5 @@
 class Node:
-    def __init__(self, value=""):  # Corrected from _init_ to __init__
+    def __init__(self, value=""):
         self.value = value
         self.children = {}
         self.probability = 0.0  # Probability of the node
@@ -9,7 +9,7 @@ class Node:
 
 
 class LempelZivTree:
-    def __init__(self):  # Corrected from _init_ to __init__
+    def __init__(self):
         self.root = Node()
         self.leaves_count = 0  # Total leaves
         self.options = set()  # Set of options initialized with letters a to z
@@ -93,7 +93,7 @@ class LempelZivTree:
 
     def calculate_sequence_probability(self, s):
         current = self.root
-        probability = 10000.0  # נתחיל עם הסתברות של 1 (הסתברות ראשונית)
+        probability = 10000.0  # נתחיל עם הסתברות של 10000 (הסתברות ראשונית)
         for char in s:
             if char in current.children:
                 current = current.children[char]
@@ -119,15 +119,15 @@ class LempelZivTree:
         # סה"כ עלים
         print(f"Total number of leaves: {self.leaves_count}")
 
-        # סה"כ ילדים לשורש
-        root_children_count = len(self.root.children)
-        print(f"Total number of children of the root: {root_children_count}")
-
-        # כמה ילדים יש לכל ילד ישיר של השורש
-        print("Number of children for each direct child of the root:")
-        for child in self.root.children.values():
-            child_children_count = self.count_all_children(child)
-            print(f"Child '{child.value}' has {child_children_count} children.")
+        # # סה"כ ילדים לשורש
+        # root_children_count = len(self.root.children)
+        # print(f"Total number of children of the root: {root_children_count}")
+        #
+        # # כמה ילדים יש לכל ילד ישיר של השורש
+        # print("Number of children for each direct child of the root:")
+        # for child in self.root.children.values():
+        #     child_children_count = self.count_all_children(child)
+        #     print(f"Child '{child.value}' has {child_children_count} children.")
 
 
 #

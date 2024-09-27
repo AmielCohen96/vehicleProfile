@@ -3,8 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 import os
+from vehicle_profiles import VehicleProfiles
 
-def process_excel_with_roc(df: pd.DataFrame, vehicle_col: str, belongs_value="Belongs", vehicle_id: str = "unknown", output_dir: str = 'media') -> str:
+
+def process_excel_with_roc(df: pd.DataFrame, vehicle_col: str, belongs_value="Belongs", vehicle_id: str = "unknown",
+                           output_dir: str = 'media', vehicle_profiles: VehicleProfiles = None) -> str:
     """Process the DataFrame, calculate ROC, and save the ROC curve image. Returns the image path."""
 
     # Ensure the output directory exists
@@ -24,8 +27,6 @@ def process_excel_with_roc(df: pd.DataFrame, vehicle_col: str, belongs_value="Be
     true_labels = np.where(df[vehicle_col] == belongs_value, 1, 0)
     probabilities = df['Probability'].values
 
-
-
     # Check if probabilities are valid numbers
     if np.any(np.isnan(probabilities)) or np.any(np.isinf(probabilities)):
         raise ValueError("Probability column contains invalid values.")
@@ -40,6 +41,9 @@ def process_excel_with_roc(df: pd.DataFrame, vehicle_col: str, belongs_value="Be
     optimal_threshold = thresholds[optimal_idx]
 
     print(f"Optimal threshold for vehicle {vehicle_id}: {optimal_threshold}")
+    if vehicle_profiles is not None:
+        vehicle_profiles.set_threshold(vehicle_id, optimal_threshold)
+        vehicle_profiles.display_profile(vehicle_id)  # Print the updated threshold for checking
 
     #  TP, TN, FP, FN
     tp = np.sum((true_labels == 1) & (probabilities >= optimal_threshold))
