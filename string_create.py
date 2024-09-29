@@ -79,25 +79,6 @@ def process_row(row):
     )
 
 
-# פונקציה לבדיקת הסתברות מחרוזת עבור מספר רכב
-def check_trip_and_add_to_tree(vehicle_profiles, vehicle_id, trip_string):
-    # לחשב את ההסתברות של הנסיעה
-    probability = vehicle_profiles.calculate_probability_for_vehicle(vehicle_id, trip_string)
-
-    # ערך הסף של הרכב
-    threshold = vehicle_profiles.get_threshold(vehicle_id)
-
-    # הדפסת ההסתברות והסף
-    print(f"Probability of trip: {probability}, Threshold for vehicle {vehicle_id}: {threshold}")
-
-    # בדיקה אם ההסתברות גבוהה מהסף
-    if probability > threshold:
-        print(f"Trip accepted for vehicle {vehicle_id}, adding to tree.")
-        vehicle_profiles.add_trip(vehicle_id, trip_string)  # הוספת הנסיעה לעץ
-    else:
-        print(f"Trip rejected for vehicle {vehicle_id}. Probability too low.")
-
-    return probability > threshold  # מחזיר אם הנסיעה התקבלה או לא
 
 #
 # # Load the CSV file into a DataFrame

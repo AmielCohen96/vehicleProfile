@@ -52,7 +52,29 @@ def create_output_dataframe(df: pd.DataFrame, vehicle_id_to_check: str) -> pd.Da
     })
 
 
-def process_and_save_results(writer, df_output: pd.DataFrame, vehicle_id_to_check: str, vehicle_profiles: VehicleProfiles, output_dir: str = 'media'):
+# פונקציה לבדיקת הסתברות מחרוזת עבור מספר רכב
+def check_trip_and_add_to_tree(vehicle_profiles, vehicle_id, trip_string):
+    # לחשב את ההסתברות של הנסיעה
+    probability = vehicle_profiles.calculate_probability_for_vehicle(vehicle_id, trip_string)
+
+    # ערך הסף של הרכב
+    threshold = vehicle_profiles.get_threshold(vehicle_id)
+
+    # הדפסת ההסתברות והסף
+    print(f"Probability of trip: {probability}, Threshold for vehicle {vehicle_id}: {threshold}")
+
+    # בדיקה אם ההסתברות גבוהה מהסף
+    if probability > threshold:
+        print(f"Trip accepted for vehicle {vehicle_id}, adding to tree.")
+        vehicle_profiles.add_trip(vehicle_id, trip_string)  # הוספת הנסיעה לעץ
+    else:
+        print(f"Trip rejected for vehicle {vehicle_id}. Probability too low.")
+
+    return probability > threshold  # מחזיר אם הנסיעה התקבלה או לא
+
+
+def process_and_save_results(writer, df_output: pd.DataFrame, vehicle_id_to_check: str,
+                             vehicle_profiles: VehicleProfiles, output_dir: str = 'media'):
     """Processes the DataFrame with ROC and saves it to an Excel sheet, and updates the vehicle profile threshold."""
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
@@ -75,9 +97,6 @@ def process_and_save_results(writer, df_output: pd.DataFrame, vehicle_id_to_chec
     optimal_threshold = df_output['Threshold'].dropna().iloc[0]  # הנחת שזה הערך שחושב
     vehicle_profiles.set_threshold(vehicle_id_to_check, optimal_threshold)
 
-    # הדפסת פרופיל הרכב לאחר העדכון
-    vehicle_profiles.display_profile(vehicle_id_to_check)
-
     # Save DataFrame to the specific sheet
     sheet_name = f'Vehicle_{vehicle_id_to_check}'
     df_output.to_excel(writer, sheet_name=sheet_name, index=False)
@@ -96,6 +115,7 @@ def process_and_save_results(writer, df_output: pd.DataFrame, vehicle_id_to_chec
         sheet.add_image(img, 'A10')
     else:
         print(f"No ROC curve image to insert for vehicle {vehicle_id_to_check}.")
+
 
 def create_file():
     """Main function to execute the entire pipeline."""
@@ -140,3 +160,26 @@ def create_file():
             process_and_save_results(writer, df_output, vehicle_id_to_check, vehicle_profiles)
 
     print(f"Results saved to {output_excel_file}")
+    while True:
+        # קבלת מספר רכב מהמשתמש
+        vehicle_id = input("Please enter the vehicle ID (or 'exit' to quit): ")
+        if vehicle_id.lower() == 'exit':
+            print("Exiting the program.")
+            break
+
+        # וידוא שמספר הרכב קיים בפרופילים
+        if vehicle_id not in vehicle_profiles.profiles:
+            print(f"No profile found for vehicle ID: {vehicle_id}")
+            continue
+
+        # קבלת מחרוזת נסיעה מהמשתמש
+        trip_string = input("Please enter the trip string to check: ")
+
+        # חישוב הסתברות למחרוזת והשוואה לערך הסף
+        accepted = check_trip_and_add_to_tree(vehicle_profiles, vehicle_id, trip_string)
+
+        # שאלת המשתמש אם ברצונו לבדוק נסיעה נוספת
+        check_another = input("Do you want to check another trip? (yes/no): ")
+        if check_another.lower() != 'yes':
+            print("Exiting the program.")
+            break

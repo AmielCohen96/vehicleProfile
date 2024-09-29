@@ -5,7 +5,6 @@ from vehicle_profiles import VehicleProfiles
 def main():
     # Start the process of creating the file
     create_file()
-
     print("Process completed.")
 
 
